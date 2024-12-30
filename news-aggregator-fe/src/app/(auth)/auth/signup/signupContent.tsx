@@ -7,7 +7,7 @@ import { useFormik } from 'formik'
 import Link from 'next/link'
 import React from 'react'
 
-export default function SignupPageComponent () {
+export default function SignupPageComponent() {
   const { mutateAsync: _registerFunction } = useRegister()
   const toast = useCustomToast()
   const loginFormik = useFormik<CreateAccountPayload>({
@@ -20,43 +20,102 @@ export default function SignupPageComponent () {
       password: "",
       password_confirmation: ""
     },
-    async onSubmit (values, formikHelpers) {
-      await _registerFunction(values)
+    async onSubmit(values, formikHelpers) {
+      try {
+        await _registerFunction(values)
 
-      toast({
-        title: "Signup Completed!!",
-        description: 'You have successfully registered',
-        status: "success"
-      })
-      const elem = document.getElementById("finish")
-      if (elem) {
-        elem.click()
+        toast({
+          title: "Signup Completed!!",
+          description: 'You have successfully registered',
+          status: "success"
+        })
+        const elem = document.getElementById("finish")
+        if (elem) {
+          elem.click()
+        }
+      } catch (error: any) {
+        toast({
+          title: "Signup Failed",
+          description: error?.message || "An error occurred while signing up",
+          status: "error"
+        })
       }
     },
   })
+
+  const showValidationErrors = () => {
+    if (!loginFormik.isValid && loginFormik.submitCount > 0) {
+      const errors = Object.values(loginFormik.errors).join(", ")
+      toast({
+        title: "Validation Errors",
+        description: errors,
+        status: "warning",
+      })
+    }
+  }
+
   return (
     <div className='h-full w-full flex items-center lg:justify-center'>
       <div className='w-9/12 h-auto'>
         <Link href="/auth/login" id="finish" />
-        <form className='flex flex-col gap-3' onSubmit={loginFormik.handleSubmit}>
+        <form
+          className='flex flex-col gap-3'
+          onSubmit={(e) => {
+            e.preventDefault()
+            showValidationErrors()
+            loginFormik.handleSubmit(e)
+          }}
+        >
           <div className='w-full flex flex-col'>
             <label className='poppins-light' htmlFor="email">Full name</label>
-            <input type="text" onChange={loginFormik.handleChange} id="name" value={loginFormik.values.name} className='h-12 text-brand-darker poppins-regular text-base outline-none focus-within:outline-none rounded-md px-3' placeholder='Enter your name' />
+            <input
+              type="text"
+              onChange={loginFormik.handleChange}
+              id="name"
+              value={loginFormik.values.name}
+              className='h-12 text-brand-darker poppins-regular text-base outline-none focus-within:outline-none rounded-md px-3'
+              placeholder='Enter your name'
+            />
           </div>
           <div className='w-full flex flex-col'>
             <label className='poppins-light' htmlFor="email">Email address</label>
-            <input type="text" onChange={loginFormik.handleChange} id="email" value={loginFormik.values.email} className='h-12 text-brand-darker poppins-regular text-base outline-none focus-within:outline-none rounded-md px-3' placeholder='Enter email address' />
+            <input
+              type="text"
+              onChange={loginFormik.handleChange}
+              id="email"
+              value={loginFormik.values.email}
+              className='h-12 text-brand-darker poppins-regular text-base outline-none focus-within:outline-none rounded-md px-3'
+              placeholder='Enter email address'
+            />
           </div>
 
           <div className='w-full flex flex-col'>
             <label className='poppins-light' htmlFor="password">Password</label>
-            <input type="password" onChange={loginFormik.handleChange} id="password" value={loginFormik.values.password} className='h-12 poppins-regular text-brand-darker text-base outline-none focus-within:outline-none rounded-md px-3' placeholder='*********' />
+            <input
+              type="password"
+              onChange={loginFormik.handleChange}
+              id="password"
+              value={loginFormik.values.password}
+              className='h-12 poppins-regular text-brand-darker text-base outline-none focus-within:outline-none rounded-md px-3'
+              placeholder='*********'
+            />
           </div>
           <div className='w-full flex flex-col'>
             <label className='poppins-light' htmlFor="password_confirmation">Confirm password</label>
-            <input type="password" onChange={loginFormik.handleChange} id="password_confirmation" value={loginFormik.values.password_confirmation} className='h-12 poppins-regular text-brand-darker text-base outline-none focus-within:outline-none rounded-md px-3' placeholder='*********' />
+            <input
+              type="password"
+              onChange={loginFormik.handleChange}
+              id="password_confirmation"
+              value={loginFormik.values.password_confirmation}
+              className='h-12 poppins-regular text-brand-darker text-base outline-none focus-within:outline-none rounded-md px-3'
+              placeholder='*********'
+            />
           </div>
-          <button disabled={!loginFormik.isValid || loginFormik.isSubmitting} type='submit' className='w-full h-12 bg-brand-darker disabled:bg-brand-darker/50 hover:bg-brand-dark border-2 border-brand-dark poppins-regular rounded-full'>
+          <button
+            disabled={!loginFormik.isValid || loginFormik.isSubmitting}
+            type='submit'
+            className='w-full h-12 bg-brand-darker disabled:bg-brand-darker/50 hover:bg-brand-dark border-2 border-brand-dark poppins-regular rounded-full'
+          >
             Register
           </button>
         </form>
