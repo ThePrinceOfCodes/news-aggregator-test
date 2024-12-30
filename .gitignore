@@ -1,0 +1,11 @@
+/news-aggregator-fe/node_modules
+/news-aggregator-fe/.pnp
+
+/news-aggregator-bk/.phpunit.cache
+/news-aggregator-bk/node_modules
+/news-aggregator-bk/public/build
+/news-aggregator-bk/public/hot
+/news-aggregator-bk/public/storage
+/news-aggregator-bk/storage/*.key
+/news-aggregator-bk/storage/pail
+/news-aggregator-bk/vendor
