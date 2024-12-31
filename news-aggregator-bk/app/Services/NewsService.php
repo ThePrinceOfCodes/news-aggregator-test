@@ -20,6 +20,12 @@ class NewsService
     {
         $this->webscrapper = $webscrapperService;
         $this->newsApisConfig = [
+            'Guardian' => [
+                'url' => env('GUARDIAN_URL'),
+                'key' => env('GUARDIAN_KEY'),
+                'isHyphenated' => true,
+                'dataIndex' => 'response'
+            ],
             'NewsAPI' => [
                 'url' => env('NEWSAPI_URL'),
                 'key' => env('NEWSAPI_KEY'),
@@ -32,13 +38,6 @@ class NewsService
                 'isHyphenated' => true,
                 'dataIndex' => 'response'
             ],
-            // 'Guardian' => [
-            //     'url' => env('GUARDIAN_URL'),
-            //     'key' => env('GUARDIAN_KEY'),
-            //     'isHyphenated' => true,
-            //     'dataIndex' => 'response'
-
-            // ],
         ];
     }
 
@@ -55,7 +54,6 @@ class NewsService
 
             foreach ($categories as $category) {
                 $newsData = $this->fetchNewsData($url, $category->name, $apiKey, $isHyphenated, $dataIndex);
-
                 if ($newsData) {
                     $parcedNews = array_merge($parcedNews, $this->processNewsData($newsData, $category, $url));
                 }
@@ -70,37 +68,37 @@ class NewsService
     }
 
     private function fetchNewsData($url, $category, $apiKey, $isHyphenated = false, $dataIndex = 'results')
-{
-    try {
-        $apiKeyParam = $isHyphenated ? 'api-key' : 'apiKey';
+    {
+        try {
+            $apiKeyParam = $isHyphenated ? 'api-key' : 'apiKey';
 
-        $response = Http::timeout(10)->get($url, [
-            'q' => $category,
-            $apiKeyParam => $apiKey
-        ]);
+            $response = Http::timeout(10)->get($url, [
+                'q' => $category,
+                $apiKeyParam => $apiKey
+            ]);
 
-        if ($response->failed()) {
-            throw new \Exception("Failed to fetch data from API.");
+            if ($response->failed()) {
+                throw new \Exception("Failed to fetch data from API.");
+            }
+
+            $data = $response->json();
+
+            if (!isset($data[$dataIndex]) || !is_array($data[$dataIndex])) {
+                throw new \Exception("Unexpected API response structure.");
+            }
+
+            return $data[$dataIndex];
+        } catch (\Exception $e) {
+            Log::error("Error fetching news data: " . $e->getMessage(), [
+                'url' => $url,
+                'category' => $category,
+                'apiKey' => $apiKey,
+            ]);
+
+            throw new \Exception("Error fetching data: " . $e->getMessage());
         }
-
-        $data = $response->json();
-
-        if (!isset($data[$dataIndex]) || !is_array($data[$dataIndex])) {
-            dd($data[$dataIndex]);
-            throw new \Exception("Unexpected API response structure.");
-        }
-
-        return $data[$dataIndex];
-    } catch (\Exception $e) {
-        Log::error("Error fetching news data: " . $e->getMessage(), [
-            'url' => $url,
-            'category' => $category,
-            'apiKey' => $apiKey,
-        ]);
-
-        throw new \Exception("Error fetching data: " . $e->getMessage());
     }
-}
+
     private function processNewsData($newsData, $category, $url)
     {
         $parcedNews = [];
@@ -130,15 +128,14 @@ class NewsService
                 case env('GUARDIAN_URL'):
                     foreach($newsData['results'] as $news){
                         $data = $this->webscrapper->scrapeGuardian($news['webUrl']);
-                        dd($data);
                         if (!empty($news['webTitle'])) {
                             $parcedNews[] = [
                                 'url' => $news['webUrl'],
                                 'image_url' => $data['image'],
-                                'source' => 'others',
+                                'source' => 'guardian',
                                 'category_id' => $category->id,
                                 'headline' => $news['webTitle'],
-                                'content' => $dat['content'],
+                                'content' => $data['content'],
                                 'title' => $news['webTitle'],
                                 'author' => 'no author',
                                 'pub_date' => $news['webPublicationDate'],
@@ -230,6 +227,7 @@ class NewsService
     {
         $acceptedNewsSource = [
             'abcnews',
+            'guardian',
             'buzzfeed',
             'cnet',
             'digitaltrends',

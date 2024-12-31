@@ -3,10 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http; 
 use App\Models\News;
-use Illuminate\Support\Facades\DB;
-use App\Models\Category;
 use App\Services\NewsService;
 use Illuminate\Support\Facades\Log; 
 
@@ -45,7 +42,6 @@ class FetchNewsData extends Command
         try {
             $parsedNews = $this->newsService->fetchNewsDataForCategories();
 
-            // dd($parcedNews);
 
             if (empty($parsedNews)) {
                 $this->info('No news data fetched.');
@@ -62,7 +58,7 @@ class FetchNewsData extends Command
                 Log::debug('Inserting chunk', ['chunk' => $chunk]);
 
                 try {
-                    News::insert($chunk);  
+                    News::insertOrIgnore($chunk);  
                 } catch (\Exception $e) {
                     Log::error('Error inserting chunk', [
                         'error' => $e->getMessage(),
